@@ -8,7 +8,7 @@ public strictfp class RobotPlayer {
     static RobotController rc;
     static boolean plantedTree = false;
     public static final float BULLETS_TO_WIN = GameConstants.BULLET_EXCHANGE_RATE * GameConstants.VICTORY_POINTS_TO_WIN;
-    public static final float PLANTING_THRESHOLD = 1;
+    // public static final float PLANTING_THRESHOLD = 3;
     
     /**
      * run() is the method that is called when a robot is instantiated in the Battlecode world.
@@ -44,6 +44,29 @@ public strictfp class RobotPlayer {
     		rc.donate(BULLETS_TO_WIN);
     	}
     }
+    
+    /**
+     * Calculates the threshold, based on turn number, at which gardeners should plant trees.
+     * 
+     * @return the planting threshold
+     */
+    static int getPlantingThreshold() {
+    	int roundNum = rc.getRoundNum();
+
+    	if (roundNum < 100) {
+    		return 6;
+    	} else if (roundNum < 200) {
+    		return 5;
+    	} else if (roundNum < 300) {
+    		return 4;
+    	} else if (roundNum < 400) {
+    		return 3;
+    	} else if (roundNum < 500) {
+    		return 2;
+    	} else {
+    		return 1;
+    	}
+    }
 
     static void runArchon() throws GameActionException {
         System.out.println("I'm an archon!");
@@ -59,13 +82,15 @@ public strictfp class RobotPlayer {
                 Direction dir = randomDirection();
                 
                 // Randomly attempt to build a gardener in all directions
-                for (int i = 0; i < 5; i++) {
+                for (int i = 0; i < 6; i++) {
                 	Direction hiringDirection = dir.rotateLeftDegrees(60 * i);
                 	
 	                if (rc.canHireGardener(hiringDirection)) {
 	                    rc.hireGardener(hiringDirection);
 	                }
                 }
+                
+                // tryMove(randomDirection());
                 
                 // Clock.yield() makes the robot wait until the next turn, then it will perform this loop again
                 Clock.yield();
@@ -120,7 +145,7 @@ public strictfp class RobotPlayer {
     static void plantNewTree() throws GameActionException {
     	List<Direction> plantableDirections = new ArrayList<>();
         
-        for (int i = 0; i < 5; i++) {
+        for (int i = 0; i < 6; i++) {
         	Direction plantingDirection = Direction.getEast().rotateLeftDegrees(60 * i);
         	
         	if (rc.canPlantTree(plantingDirection)) {
@@ -128,18 +153,18 @@ public strictfp class RobotPlayer {
         	}
         }
         
-        System.out.println(plantableDirections.size());
+        if (!plantedTree) {
+        	if (plantableDirections.size() >= getPlantingThreshold()) {
+        		plantedTree = true;
+        	}
+        }
         
-        if (plantableDirections.size() >= PLANTING_THRESHOLD) {
+        if (plantedTree) {
         	for (Direction plantableDirection : plantableDirections) {
         		if (rc.canPlantTree(plantableDirection)) {
             		rc.plantTree(plantableDirection);      		
             	}
         	}
-        	
-        	// equivalent to rc.plantTree(plantableDirections.get(0));
-        	
-        	plantedTree = true;
         }
     }
 
